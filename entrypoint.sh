@@ -17,6 +17,9 @@ if [ ! "$(ls -A "/var/www/html/ready.html")" ]; then
 	mv -f /var/www/html/livezilla/* /var/www/html
 	rm -R /var/www/html/livezilla/
 	rm /var/www/html/how_to_*.html
+	
+	mkdir /var/www/html/uploads
+	chmod 777 /var/www/html/_config /var/www/html/_language /var/www/html/_log /var/www/html/install var/www/html/stats /var/www/html/uploads
 
 	echo "livezilla is ready!"
 	echo "ready" >"/var/www/html/ready.html"

@@ -42,22 +42,23 @@ RUN ln -sf /dev/stdout /var/log/nginx/access.log && \
     ln -sf /dev/stdout /var/log/php7/error.log && \
     ln -sf /dev/stderr /var/log/php7/error.log
 
-RUN adduser -S -s /bin/bash -u 1001 -G root www-data
+RUN addgroup -S www-data && \
+    adduser -S -s /bin/bash -u 1001 -G www-data www-data
 
 RUN touch /var/run/nginx.pid && \
-    chown -R www-data:root /var/run/nginx.pid /etc/php7/php-fpm.d
+    chown -R www-data:www-data /var/run/nginx.pid /etc/php7/php-fpm.d
 
 RUN mkdir -p /var/www/html && \
     mkdir -p /usr/share/nginx/cache && \
     mkdir -p /var/cache/nginx && \
     mkdir -p /var/lib/nginx && \
     mkdir -p /setup && \
-    chown -R www-data:root /var/www /usr/share/nginx/cache /var/cache/nginx /var/lib/nginx/
-
+    chown -R www-data:www-data /var/www /usr/share/nginx/cache /var/cache/nginx /var/lib/nginx/
+    
 WORKDIR /var/www/html/
 USER 1001
 
-RUN chown -R www-data:root /var/www/html
+RUN chown -R www-data:www-data /var/www/html
 
 COPY conf/php-fpm-pool.conf /etc/php7/php-fpm.d/www.conf
 COPY conf/supervisord.conf /etc/supervisor/supervisord.conf
