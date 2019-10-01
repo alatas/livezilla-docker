@@ -1,28 +1,32 @@
 #!/bin/bash
 set -o errexit -o nounset -o pipefail
 
+if [ ! "$(ls -A "/var/www/html/ready.html")" ]; then
+	echo "initial setup is starting"
+	echo "removing older files"
+	find . -mindepth 1 ! -regex '^.*_config.*' -delete
+	
+	echo "extracting setup files"
+	unzip /setup/livezilla_server_${livezilla_ver}.zip -o -qq -d /var/www/html/
+	
+	if [ "$(ls -A "/var/www/html/_config")" ]; then
+		echo "config folder saved"
+		rm -R "/var/www/html/livezilla/_config"
+	fi
+	
+	mv -f /var/www/html/livezilla/* /var/www/html
+	rm -R /var/www/html/livezilla/
+	rm /var/www/html/how_to_*.html
 
-if [ "${INSTALL_MODE}" = "false" ]; then
-	sed 's,{{DB_HOST}},'"${DB_HOST}"',g' -i /var/www/html/_config/config.php
-	sed 's,{{DB_DATABASE}},'"${DB_DATABASE}"',g' -i /var/www/html/_config/config.php
-	sed 's,{{DB_USERNAME}},'"${DB_USERNAME}"',g' -i /var/www/html/_config/config.php
-	sed 's,{{DB_PASSWORD}},'"${DB_PASSWORD}"',g' -i /var/www/html/_config/config.php
-	sed 's,{{DB_PREFIX}},'"${DB_PREFIX}"',g' -i /var/www/html/_config/config.php
-	sed 's,{{DB_ENGINE}},'"${DB_ENGINE}"',g' -i /var/www/html/_config/config.php
-	sed 's,{{LIVEZILLA_ID}},'"${LIVEZILLA_ID}"',g' -i /var/www/html/_config/config.php
-	sed 's,{{LIVEZILLA_PR_CR}},'"${LIVEZILLA_PR_CR}"',g' -i /var/www/html/_config/config.php
-	echo install mode false
-	rm -rf /var/www/html/install
-else
-	echo install mode true
-	rm -rf /var/www/html/_config/config.php
+	echo "livezilla is ready!"
+	echo "ready" >"/var/www/html/ready.html"
 fi
 
-
 start_system() {
-  /usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf
+	/usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf
 }
 
+echo "browse http://localhost:8000"
 start_system
 
 exit 0

@@ -1,15 +1,6 @@
 FROM nginx:1.13.9-alpine
 
-MAINTAINER CASAUCAU Cyril
-
 EXPOSE 8000
-CMD ["/sbin/entrypoint.sh"]
-
-ARG livezilla_ver
-ARG archive_url
-
-ENV livezilla_ver 8.0.0.5
-ENV archive_url ${archive_url:-https://www.livezilla.net/downloads/pubfiles/livezilla_server_${livezilla_ver}.zip}
 
 RUN apk add --no-cache --update \
     mysql-client \
@@ -60,26 +51,34 @@ RUN mkdir -p /var/www/html && \
     mkdir -p /usr/share/nginx/cache && \
     mkdir -p /var/cache/nginx && \
     mkdir -p /var/lib/nginx && \
+    mkdir -p /setup && \
     chown -R www-data:root /var/www /usr/share/nginx/cache /var/cache/nginx /var/lib/nginx/
 
 WORKDIR /var/www/html/
 USER 1001
 
-RUN wget ${archive_url} && \ 
-    unzip livezilla_server_${livezilla_ver}.zip && \
-    mv livezilla/* /var/www/html/ && \
-    rm -r livezilla_server_${livezilla_ver}.zip && \
-    chown -R www-data:root /var/www/html
+RUN chown -R www-data:root /var/www/html
 
 COPY conf/php-fpm-pool.conf /etc/php7/php-fpm.d/www.conf
 COPY conf/supervisord.conf /etc/supervisor/supervisord.conf
 COPY conf/nginx.conf /etc/nginx/nginx.conf
 COPY conf/nginx-site.conf /etc/nginx/conf.d/default.conf
-COPY conf/config.php /var/www/html/_config/config.php
 COPY entrypoint.sh /sbin/entrypoint.sh
 
 USER root
 RUN chmod g+rwx /var/run/nginx.pid && \
-    chmod -R g+rw /var/www /usr/share/nginx/cache /var/cache/nginx /var/lib/nginx/ /etc/php7/php-fpm.d && \
-    chmod 777 -R /var/www/html/stats /var/www/html/_log /var/www/html/_config
+    chmod -R g+rw /var/www /usr/share/nginx/cache /var/cache/nginx /var/lib/nginx/ /etc/php7/php-fpm.d
+
+ENV livezilla_ver=8.0.1.3
+
+# you can use the downloaded installation zip file if it's in the folder. 
+# this prevents downloading the zip file at every docker build and lowers the build time.
+RUN wget "https://www.livezilla.net/downloads/pubfiles/livezilla_server_${livezilla_ver}.zip" -P /setup
+#COPY livezilla_server_${livezilla_ver}.zip /setup/ 
+
+
+COPY conf/config.php /setup/config.php
+
 USER 1001
+
+CMD ["/sbin/entrypoint.sh"]
